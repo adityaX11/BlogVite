@@ -18,11 +18,35 @@ function Chat() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const isUserScrolledUpRef = useRef(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [hasNewMessagesBelow, setHasNewMessagesBelow] = useState(false);
 
-  // Auto-scroll to bottom of messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Scroll only the chat message container (never whole window)
+  const scrollToBottom = (smooth = true) => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    if (smooth) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
+    setIsAtBottom(true);
+    isUserScrolledUpRef.current = false;
+    setHasNewMessagesBelow(false);
+  };
+
+  const handleScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceFromBottom < 80;
+    setIsAtBottom(atBottom);
+    isUserScrolledUpRef.current = !atBottom;
+    if (atBottom) {
+      setHasNewMessagesBelow(false);
+    }
   };
 
   // Load conversations list
@@ -37,13 +61,27 @@ function Chat() {
     }
   };
 
-  // Load active chat messages
+  // Load active chat messages without resetting scroll if unchanged
   const loadMessages = async (targetId) => {
     if (!targetId) return;
     try {
       const data = await chatService.getMessages(targetId);
       if (Array.isArray(data)) {
-        setMessages(data);
+        setMessages((prev) => {
+          // If no new messages, keep same reference to avoid useless re-renders
+          if (
+            prev.length === data.length &&
+            prev[prev.length - 1]?._id === data[data.length - 1]?._id
+          ) {
+            return prev;
+          }
+
+          // If new messages arrived while user is reading older messages
+          if (data.length > prev.length && isUserScrolledUpRef.current) {
+            setHasNewMessagesBelow(true);
+          }
+          return data;
+        });
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -72,6 +110,11 @@ function Chat() {
           if (match) setActiveFriend(match);
         });
       }
+      // Reset scroll state on new chat
+      isUserScrolledUpRef.current = false;
+      setIsAtBottom(true);
+      setHasNewMessagesBelow(false);
+      setTimeout(() => scrollToBottom(false), 50);
     } else {
       setActiveFriend(null);
       setMessages([]);
@@ -88,8 +131,12 @@ function Chat() {
     return () => clearInterval(interval);
   }, [friendId]);
 
+  // Only auto-scroll down if user was already at the bottom
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length === 0) return;
+    if (!isUserScrolledUpRef.current) {
+      scrollToBottom(true);
+    }
   }, [messages]);
 
   const handleSendMessage = async (e) => {
@@ -105,6 +152,9 @@ function Chat() {
       if (newMsg && !newMsg.message) {
         setMessages((prev) => [...prev, newMsg]);
         loadConversations();
+        // User just sent a message: scroll to bottom
+        isUserScrolledUpRef.current = false;
+        setTimeout(() => scrollToBottom(true), 50);
       }
     } catch (err) {
       alert(err.message || 'Failed to send message');
@@ -259,40 +309,60 @@ function Chat() {
                 </div>
 
                 {/* Messages Feed */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 text-xs">
-                      <div className="text-4xl mb-2">👋</div>
-                      <p>Say hello to {activeFriend.name}!</p>
-                    </div>
-                  ) : (
-                    messages.map((msg) => {
-                      const isMe = msg.sender?._id === currentUser?.id || msg.sender === currentUser?.id;
-                      return (
-                        <div
-                          key={msg._id}
-                          className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
-                        >
+                <div className="flex-1 relative flex flex-col min-h-0 overflow-hidden">
+                  <div
+                    ref={chatContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+                  >
+                    {messages.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 text-xs">
+                        <div className="text-4xl mb-2">👋</div>
+                        <p>Say hello to {activeFriend.name}!</p>
+                      </div>
+                    ) : (
+                      messages.map((msg) => {
+                        const isMe = msg.sender?._id === currentUser?.id || msg.sender === currentUser?.id;
+                        return (
                           <div
-                            className={`max-w-[85%] sm:max-w-md md:max-w-lg px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                              isMe
-                                ? 'bg-gradient-to-r from-[#F2C7C7] to-[#D5F3D8] text-gray-900 font-medium rounded-br-none shadow-md'
-                                : 'bg-white/10 backdrop-blur-md text-gray-100 rounded-bl-none border border-white/10'
-                            }`}
+                            key={msg._id}
+                            className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                           >
-                            {msg.text}
+                            <div
+                              className={`max-w-[85%] sm:max-w-md md:max-w-lg px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                isMe
+                                  ? 'bg-gradient-to-r from-[#F2C7C7] to-[#D5F3D8] text-gray-900 font-medium rounded-br-none shadow-md'
+                                  : 'bg-white/10 backdrop-blur-md text-gray-100 rounded-bl-none border border-white/10'
+                              }`}
+                            >
+                              {msg.text}
+                            </div>
+                            <span className="text-[10px] text-gray-500 mt-1 px-1 font-mono">
+                              {new Date(msg.createdAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
                           </div>
-                          <span className="text-[10px] text-gray-500 mt-1 px-1 font-mono">
-                            {new Date(msg.createdAt).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                      );
-                    })
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Floating Jump to Bottom Button */}
+                  {!isAtBottom && (
+                    <button
+                      type="button"
+                      onClick={() => scrollToBottom(true)}
+                      className="absolute bottom-3 right-4 z-10 py-1.5 px-3 rounded-full bg-gray-900/90 hover:bg-gray-800 text-white border border-white/20 shadow-2xl flex items-center gap-1.5 text-xs font-medium transition-all backdrop-blur-md cursor-pointer hover:scale-105"
+                      title="Scroll to latest messages"
+                    >
+                      <span>↓ Latest</span>
+                      {hasNewMessagesBelow && (
+                        <span className="w-2 h-2 rounded-full bg-[#F2C7C7] animate-ping" />
+                      )}
+                    </button>
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input Box */}
