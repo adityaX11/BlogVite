@@ -16,6 +16,8 @@ import connectDB from '../database/index.js';
 import './config/passport.js';        // register strategies
 import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js';
+import userRoutes from './routes/user.routes.js';
+import chatRoutes from './routes/chat.routes.js';
 
 const app = express();
 
@@ -47,6 +49,8 @@ app.use(passport.initialize());
 /* ─── Routes ─────────────────────────────────────────────── */
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/health', (_, res) => res.json({ status: 'OK', timestamp: new Date() }));
 

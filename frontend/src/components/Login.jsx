@@ -1,5 +1,4 @@
-import authService from '../appwrite/auth';       // ← Appwrite (kept during transition)
-import { authService as newAuth } from '../services/auth.service'; // ← New JWT auth
+import { authService as newAuth } from '../services/auth.service';
 import { Link, useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -13,19 +12,20 @@ function Login() {
   const [error, setError]  = useState('');
   const [loading, setLoading] = useState(false);
 
-  /* ── Email / Password login (Appwrite — kept during transition) ── */
+  /* ── Native JWT Login ──────────────────────────────────── */
   const login = async (data) => {
     setError('');
     setLoading(true);
     try {
-      const session = await authService.login(data);
-      if (session) {
-        const userData = await authService.getCurrentUser();
-        if (userData) dispatch(authLogin({ userData }));
+      const res = await newAuth.login(data);
+      if (res && res.accessToken && res.user) {
+        dispatch(authLogin({ userData: res.user, accessToken: res.accessToken }));
         navigate('/');
+      } else {
+        throw new Error(res?.message || 'Login failed');
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

@@ -1,120 +1,57 @@
-import React from 'react'
-import {Controller} from "react-hook-form"
-import {Editor} from "@tinymce/tinymce-react"
-import conf from "../conf/conf"
+import React from 'react';
+import { Controller } from "react-hook-form";
+import { Editor } from "@tinymce/tinymce-react";
 
+function RTE({ name, control, label, defaultValue = "" }) {
+  const apiKey = import.meta.env.VITE_TINYMCE_API_KEY || "yn26qm8sqp9eu6gl8kaghzglbrfrlppad4pc0zppb5i9orqm";
 
-function RTE({
-    name, control, label, defaultValue = ""
-}) {
   return (
-    <div className='w-full'>
-        {
-            label && <label className='inline-block mb-1 pl-1'> {label}</label>
-        }
+    <div className="w-full space-y-1.5">
+      {label && <label className="block text-sm font-medium text-gray-300">{label}</label>}
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-lg">
         <Controller
-        name={name || "content"}
-        control={control}
-        render={({field: {onChange}}) => (
+          name={name || "content"}
+          control={control}
+          render={({ field: { onChange } }) => (
             <Editor
-            apiKey={conf.tinyMceApiKey}
-            initialValue={defaultValue}
-            init={{
+              apiKey={apiKey}
+              initialValue={defaultValue}
+              init={{
                 branding: false,
-                height: 500,
+                height: 420,
                 menubar: true,
+                skin: "oxide-dark",
+                content_css: "dark",
                 plugins: [
-                    "image",
-                    "advlist",
-                    "autolink",
-                    "lists",
-                    "link",
-                    "image",
-                    "charmap",
-                    "preview",
-                    "anchor",
-                    "searchreplace",
-                    "visualblocks",
-                    "code",
-                    "fullscreen",
-                    "insertdatetime",
-                    "media",
-                    "table",
-                    "code",
-                    "help",
-                    "wordcount",
-                    "anchor",
+                  "image",
+                  "advlist",
+                  "autolink",
+                  "lists",
+                  "link",
+                  "charmap",
+                  "preview",
+                  "anchor",
+                  "searchreplace",
+                  "visualblocks",
+                  "code",
+                  "fullscreen",
+                  "insertdatetime",
+                  "media",
+                  "table",
+                  "wordcount",
                 ],
                 toolbar:
-                "undo redo | blocks | image | bold italic forecolor | alignleft aligncenter bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |removeformat | help",
-                content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-            }}
-            onEditorChange={onChange}
+                  "undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright | bullist numlist | link image media | removeformat | fullscreen code",
+                content_style:
+                  "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:15px; color: #e5e7eb; background: #0c0a1f; line-height: 1.6; }",
+              }}
+              onEditorChange={onChange}
             />
-        )}
+          )}
         />
+      </div>
     </div>
-  )
+  );
 }
 
-export default RTE
-
-
-// import React from 'react'
-// import {Controller} from "react-hook-form"
-// import {Editor} from "@tinymce/tinymce-react"
-
-
-// function RTE({
-//     name, control, label, defaultValue = ""
-// }) {
-//   return (
-//     <div className='w-full'>
-//         {
-//             label && <label className='inline-block mb-1 pl-1'> {label}</label>
-//         }
-//         <Controller
-//         name={name || "content"}
-//         control={control}
-//         render={({field: {onChange}}) => (
-//             <Editor
-//             initialValue={defaultValue}
-//             init={{
-//                 branding: false,
-//                 height: 500,
-//                 menubar: true,
-//                 plugins: [
-//                     "image",
-//                     "advlist",
-//                     "autolink",
-//                     "lists",
-//                     "link",
-//                     "image",
-//                     "charmap",
-//                     "preview",
-//                     "anchor",
-//                     "searchreplace",
-//                     "visualblocks",
-//                     "code",
-//                     "fullscreen",
-//                     "insertdatetime",
-//                     "media",
-//                     "table",
-//                     "code",
-//                     "help",
-//                     "wordcount",
-//                     "anchor",
-//                 ],
-//                 toolbar:
-//                 "undo redo | blocks | image | bold italic forecolor | alignleft aligncenter bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |removeformat | help",
-//                 content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-//             }}
-//             onEditorChange={onChange}
-//             />
-//         )}
-//         />
-//     </div>
-//   )
-// }
-
-// export default RTE
+export default RTE;

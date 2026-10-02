@@ -4,68 +4,67 @@ import { useDispatch } from 'react-redux';
 import { login, logout } from './store/authSlice';
 import Header from './components/Header/Header';
 import Footer from './components/Footer/Footer';
-import authService from './appwrite/auth';   // ← Appwrite kept during transition
-import { apiService } from './services/api'; // ← New JWT service
+import { authService } from './services/auth.service';
+import { apiService } from './services/api';
 
 function App() {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // 1. Check Appwrite session (existing auth — kept during transition)
-    authService
-      .getCurrentUser()
-      .then((userData) => {
-        if (userData) {
-          dispatch(login({ userData }));
-          return;
-        }
+    const token = apiService.getToken();
+    if (token) {
+      authService
+        .getMe()
+        .then((res) => {
+          if (res?.user) {
+            dispatch(login({ userData: res.user, accessToken: token }));
+          } else {
+            dispatch(logout());
+          }
+        })
+        .catch(() => dispatch(logout()))
+        .finally(() => setLoading(false));
+    } else {
+      // Check if refresh cookie exists by pinging refresh endpoint
+      authService
+        .refresh()
+        .then((res) => {
+          if (res?.accessToken) {
+            apiService.setToken(res.accessToken);
+            return authService.getMe().then((meRes) => {
+              if (meRes?.user) {
+                dispatch(login({ userData: meRes.user, accessToken: res.accessToken }));
+              }
+            });
+          } else {
+            dispatch(logout());
+          }
+        })
+        .catch(() => dispatch(logout()))
+        .finally(() => setLoading(false));
+    }
 
-        // 2. Fall back to JWT — check if we have a stored access token
-        const token = apiService.getToken();
-        if (token) {
-          // Try to get user from new backend
-          fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: 'include',
-          })
-            .then(r => r.json())
-            .then(res => {
-              if (res.user) dispatch(login({ userData: res.user, accessToken: token }));
-              else dispatch(logout());
-            })
-            .catch(() => dispatch(logout()));
-        } else {
-          dispatch(logout());
-        }
-      })
-      .catch(() => dispatch(logout()))
-      .finally(() => setLoading(false));
-
-    // Listen for session expiry events from api.js
     const handleExpired = () => dispatch(logout());
     window.addEventListener('auth:expired', handleExpired);
     return () => window.removeEventListener('auth:expired', handleExpired);
   }, [dispatch]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#070514]">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-950 via-purple-950 to-black">
-      {/* Glassmorphism Header */}
-      <div className="relative z-20">
-        <Header />
-      </div>
-
-      {/* Main content — sits above 3D background */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#0a0720] via-[#050312] to-black text-gray-100">
+      <Header />
       <main className="flex-1 relative z-10">
         <Outlet />
       </main>
-
-      {/* Footer */}
-      <div className="relative z-20">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

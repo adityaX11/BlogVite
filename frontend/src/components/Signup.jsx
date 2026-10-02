@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { login as authLogin } from '../store/authSlice';
-import authService from '../appwrite/auth';
 import { authService as newAuth } from '../services/auth.service';
 
 function Signup() {
@@ -17,7 +16,6 @@ function Signup() {
     setError('');
     setLoading(true);
     try {
-      // 1. Try new JWT backend signup first
       const res = await newAuth.signup({
         name: data.name,
         email: data.email,
@@ -30,17 +28,8 @@ function Signup() {
         return;
       }
 
-      // If backend returned an error message
       if (res?.message) {
         throw new Error(res.message);
-      }
-
-      // 2. Fall back to Appwrite if new backend is unreachable
-      const userData = await authService.createAccount(data);
-      if (userData) {
-        const currentUser = await authService.getCurrentUser();
-        if (currentUser) dispatch(authLogin({ userData: currentUser }));
-        navigate('/');
       }
     } catch (err) {
       setError(err.message || 'Signup failed');

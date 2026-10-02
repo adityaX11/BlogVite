@@ -5,13 +5,43 @@ import { deleteImage } from '../utils/cloudinary.js';
    CREATE POST
 ════════════════════════════════════════════════════════════ */
 export const createPost = async (req, res) => {
-  const { title, slug, content, caption, status, tags } = req.body;
-  if (!title || !slug || !content) {
-    return res.status(400).json({ message: 'title, slug and content are required' });
+  const { title, caption, status } = req.body;
+  let { slug, content = '', tags } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ message: 'Title is required' });
   }
+
   try {
-    const exists = await Post.findOne({ slug });
-    if (exists) return res.status(409).json({ message: 'A post with this slug already exists' });
+    // Generate slug from title if not provided
+    if (!slug || !slug.trim()) {
+      slug = title
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-zA-Z0-9\s]+/g, '')
+        .replace(/\s+/g, '-');
+    }
+
+    // Ensure unique slug
+    let finalSlug = slug;
+    let counter = 1;
+    while (await Post.findOne({ slug: finalSlug })) {
+      finalSlug = `${slug}-${Date.now().toString().slice(-4)}${counter > 1 ? `-${counter}` : ''}`;
+      counter++;
+    }
+
+    let parsedTags = [];
+    if (tags) {
+      if (typeof tags === 'string') {
+        try {
+          parsedTags = JSON.parse(tags);
+        } catch {
+          parsedTags = tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+        }
+      } else if (Array.isArray(tags)) {
+        parsedTags = tags;
+      }
+    }
 
     const post = await Post.create({
       title,

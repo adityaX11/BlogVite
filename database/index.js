@@ -6,5 +6,6 @@ import connectDB from './config/db.js';
 
 export { default as User } from './models/User.js';
 export { default as Post } from './models/Post.js';
+export { default as Message } from './models/Message.js';
 export { connectDB };
 export default connectDB;

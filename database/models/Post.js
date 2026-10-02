@@ -17,7 +17,7 @@ const postSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: [true, 'Content is required'],   // Rich HTML from TinyMCE
+      default: '',      // optional: only title is mandatory
     },
     excerpt: {
       type: String,
@@ -53,7 +53,6 @@ const postSchema = new mongoose.Schema(
 /* ─── Auto-generate excerpt from content ─────────────────── */
 postSchema.pre('save', function (next) {
   if (!this.excerpt && this.content) {
-    // Strip HTML tags and take first 200 chars
     const plain = this.content.replace(/<[^>]+>/g, '').trim();
     this.excerpt = plain.slice(0, 200) + (plain.length > 200 ? '…' : '');
   }

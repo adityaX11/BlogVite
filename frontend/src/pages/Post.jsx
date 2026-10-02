@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import appwriteService from "../appwrite/config";
 import { postService } from "../services/post.service";
 import Button from "../components/Button";
+import BackButton from "../components/BackButton";
 import Container from "../components/container/container";
 import parse from "html-react-parser";
 import { useSelector } from "react-redux";
 
 function Post() {
   const [post, setPost] = useState(null);
-  const [isMongo, setIsMongo] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -18,54 +17,31 @@ function Post() {
   useEffect(() => {
     if (!slug) return;
 
-    // 1. Try MongoDB backend first
-    postService.getPost(slug)
+    postService
+      .getPost(slug)
       .then((mongoPost) => {
         if (mongoPost && !mongoPost.error && mongoPost._id) {
           setPost(mongoPost);
-          setIsMongo(true);
-        } else {
-          // 2. Fall back to Appwrite
-          fetchAppwritePost();
-        }
-      })
-      .catch(() => {
-        fetchAppwritePost();
-      });
-
-    function fetchAppwritePost() {
-      appwriteService.getPost(slug).then((appwriteDoc) => {
-        if (appwriteDoc) {
-          setPost(appwriteDoc);
-          setIsMongo(false);
         } else {
           navigate("/");
         }
+      })
+      .catch(() => {
+        navigate("/");
       });
-    }
   }, [slug, navigate]);
 
-  // Check if current logged-in user is the author
   const isAuthor = Boolean(
-    post && userData && (
-      (isMongo && (post.author?._id === userData.id || post.author === userData.id)) ||
-      (!isMongo && post.userId === userData.$id)
-    )
+    post && userData && (post.author?._id === userData.id || post.author === userData.id)
   );
 
   const deletePost = async () => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
-
-    if (isMongo) {
+    try {
       await postService.deletePost(post.slug);
       navigate("/");
-    } else {
-      const status = await appwriteService.deletePost(post.$id);
-      if (status) {
-        const imageId = post.featureImg || post.featuredImage;
-        if (imageId) appwriteService.deleteFile(imageId);
-        navigate("/");
-      }
+    } catch (err) {
+      alert("Failed to delete post: " + err.message);
     }
   };
 
@@ -77,22 +53,32 @@ function Post() {
     );
   }
 
-  // Resolve image URL
-  let imageUrl = "";
-  if (isMongo) {
-    imageUrl = post.featuredImage?.url || "";
-  } else {
-    const fileId = post.featureImg || post.featuredImage;
-    if (fileId) imageUrl = appwriteService.getFilePreview(fileId);
-  }
+  const imageUrl = post.featuredImage?.url || "";
 
   return (
-    <div className="py-12 min-h-screen">
+    <div className="py-10 min-h-screen">
       <Container>
+        {/* ── Back Navigation ── */}
+        <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between">
+          <BackButton fallback="/all-posts" label="Back to Posts" />
+          {isAuthor && (
+            <div className="flex gap-2">
+              <Link to={`/edit-post/${post.slug}`}>
+                <Button bgColor="bg-indigo-600 hover:bg-indigo-500 py-1.5 px-4 text-xs font-semibold">
+                  Edit
+                </Button>
+              </Link>
+              <Button bgColor="bg-red-600/80 hover:bg-red-600 py-1.5 px-4 text-xs font-semibold" onClick={deletePost}>
+                Delete
+              </Button>
+            </div>
+          )}
+        </div>
+
         <article className="max-w-4xl mx-auto bg-white/5 backdrop-blur-2xl rounded-3xl p-6 sm:p-10 border border-white/10 shadow-2xl text-white">
           {/* Header Image */}
           {imageUrl && !imageFailed ? (
-            <div className="w-full h-80 sm:h-96 rounded-2xl overflow-hidden mb-8 relative shadow-lg">
+            <div className="w-full h-80 sm:h-96 rounded-2xl overflow-hidden mb-8 relative shadow-lg bg-black/40">
               <img
                 src={imageUrl}
                 alt={post.title}
@@ -101,23 +87,11 @@ function Post() {
               />
               {post.featuredImage?.caption && (
                 <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-sm px-4 py-2 text-xs text-gray-300">
-                  {post.featuredImage.caption}
+                  📷 {post.featuredImage.caption}
                 </div>
               )}
             </div>
           ) : null}
-
-          {/* Action buttons if Author */}
-          {isAuthor && (
-            <div className="flex justify-end gap-3 mb-6">
-              <Link to={`/edit-post/${post.slug || post.$id}`}>
-                <Button bgColor="bg-indigo-600 hover:bg-indigo-500">Edit Post</Button>
-              </Link>
-              <Button bgColor="bg-red-600 hover:bg-red-500" onClick={deletePost}>
-                Delete
-              </Button>
-            </div>
-          )}
 
           {/* Title & Metadata */}
           <header className="mb-8 border-b border-white/10 pb-6">
@@ -127,7 +101,7 @@ function Post() {
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
               {post.author?.name && (
                 <span className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white text-xs">
                     {post.author.name[0].toUpperCase()}
                   </span>
                   {post.author.name}
@@ -157,9 +131,13 @@ function Post() {
           </header>
 
           {/* Post Content */}
-          <div className="prose prose-invert max-w-none text-gray-200 leading-relaxed text-base sm:text-lg space-y-4">
-            {parse(post.content || "")}
-          </div>
+          {post.content ? (
+            <div className="prose prose-invert max-w-none text-gray-200 leading-relaxed text-base sm:text-lg space-y-4">
+              {parse(post.content)}
+            </div>
+          ) : (
+            <p className="text-gray-400 italic text-sm">No body content provided for this story.</p>
+          )}
         </article>
       </Container>
     </div>

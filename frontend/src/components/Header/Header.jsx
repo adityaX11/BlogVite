@@ -17,13 +17,18 @@ function Header() {
       active: true,
     },
     {
-      name: 'All Posts',
+      name: 'Explore Stories',
       slug: '/all-posts',
+      active: true,
+    },
+    {
+      name: 'Write',
+      slug: '/add-post',
       active: authStatus,
     },
     {
-      name: 'Add Post',
-      slug: '/add-post',
+      name: 'Chat 💬',
+      slug: '/chat',
       active: authStatus,
     },
     {
@@ -40,25 +45,22 @@ function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10 py-3 transition-all">
+    <header className="sticky top-0 z-50 bg-[#070517]/80 backdrop-blur-xl border-b border-white/10 py-3 transition-all">
       <Container>
         <nav className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-2xl group-hover:scale-110 transition-transform">✨</span>
-              <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                BlogVite
-              </span>
-            </Link>
-          </div>
+          {/* ── Brand Logo ── */}
+          <Link to="/" className="flex items-center gap-2 group">
+            <Logo />
+          </Link>
 
-          <ul className="flex items-center gap-2 sm:gap-4">
+          {/* ── Navigation Links ── */}
+          <ul className="flex items-center gap-2 sm:gap-3">
             {navItems.map((item) =>
               item.active ? (
                 <li key={item.slug}>
                   <button
                     onClick={() => navigate(item.slug)}
-                    className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
+                    className={`px-3.5 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-200 ${
                       item.highlight
                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-900/40'
                         : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -70,13 +72,21 @@ function Header() {
               ) : null
             )}
 
+            {/* User Profile / Dashboard Avatar */}
             {authStatus && (
-              <li className="flex items-center gap-3 ml-2">
-                {userData?.name && (
-                  <span className="hidden sm:inline text-xs text-gray-400">
-                    Hi, <strong className="text-white">{userData.name.split(' ')[0]}</strong>
+              <li className="flex items-center gap-3 ml-2 pl-3 border-l border-white/15">
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-xs font-semibold text-white group"
+                  title="Open Dashboard"
+                >
+                  <span className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[11px] font-bold text-white shadow">
+                    {userData?.name?.[0]?.toUpperCase() || 'U'}
                   </span>
-                )}
+                  <span className="hidden md:inline group-hover:text-indigo-300">
+                    {userData?.name?.split(' ')[0] || 'Profile'}
+                  </span>
+                </Link>
                 <LogoutBtn />
               </li>
             )}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import appwriteService from '../appwrite/config';   // ← Appwrite (kept during transition)
-import { postService } from '../services/post.service'; // ← MongoDB Backend
+import { postService } from '../services/post.service';
 import Container from '../components/container/container';
 import PostCard from '../components/PostCard';
 import ThreePostCards from '../components/ThreePostCards';
@@ -13,22 +12,13 @@ function Home() {
   const isLoggedIn = useSelector((state) => state.auth.status);
 
   useEffect(() => {
-    // Try MongoDB backend first
     postService.getPosts()
       .then((res) => {
-        if (res?.posts && res.posts.length > 0) {
+        if (res?.posts) {
           setPosts(res.posts);
-        } else {
-          return appwriteService.getPosts([]).then((result) => {
-            if (result) setPosts(result.documents);
-          });
         }
       })
-      .catch(() => {
-        appwriteService.getPosts([]).then((result) => {
-          if (result) setPosts(result.documents);
-        });
-      })
+      .catch((err) => console.error("Error fetching posts:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -125,7 +115,7 @@ function Home() {
       <Container>
         <div className="flex flex-wrap gap-6 pt-20">
           {posts.map((post) => (
-            <div className="p-2 w-full sm:w-1/2 lg:w-1/3 xl:w-1/4" key={post.$id}>
+            <div className="p-2 w-full sm:w-1/2 lg:w-1/3 xl:w-1/4" key={post._id || post.slug}>
               <PostCard {...post} />
             </div>
           ))}

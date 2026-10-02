@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
       default: '',
-      maxlength: [200, 'Bio cannot exceed 200 characters'],
+      maxlength: [300, 'Bio cannot exceed 300 characters'],
     },
     provider: {
       type: String,
@@ -39,10 +39,34 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
+    friendRequests: [
+      {
+        from: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending',
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     refreshToken: {
       type: String,
       default: null,
-      select: false,      // never return by default
+      select: false,
     },
   },
   { timestamps: true }
@@ -68,6 +92,8 @@ userSchema.methods.toPublic = function () {
     avatar: this.avatar,
     bio: this.bio,
     provider: this.provider,
+    friends: this.friends || [],
+    friendRequests: this.friendRequests || [],
     createdAt: this.createdAt,
   };
 };
