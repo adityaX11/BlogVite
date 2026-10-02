@@ -1,0 +1,15 @@
+{
+  "name": "blogvite-database",
+  "version": "1.0.0",
+  "description": "Mongoose models, DB connection, and seed scripts for BlogVite",
+  "type": "module",
+  "scripts": {
+    "seed": "node seeds/seed.js",
+    "seed:clear": "node seeds/seed.js --clear"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.5"
+  }
+}
