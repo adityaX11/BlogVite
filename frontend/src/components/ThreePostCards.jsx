@@ -28,8 +28,9 @@ function PostCard3D({ post, position, rotation, index }) {
   const phase = useMemo(() => index * (Math.PI * 2) / 7, [index]);
 
   // Load image texture if post has one
+  // Soft pastel colors matching app palette (#F2C7C7, #D5F3D8, etc.)
   const fallbackColor = useMemo(() => {
-    const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+    const colors = ['#F2C7C7', '#D5F3D8', '#F8D5D5', '#CCEED1', '#F5BCBC', '#BEE8C3'];
     return colors[index % colors.length];
   }, [index]);
 
@@ -348,14 +349,14 @@ export default function ThreePostCards({ posts = [], visible = true }) {
           {/* ── Lighting ─── */}
           <ambientLight intensity={0.3} />
           <directionalLight position={[5, 10, 5]} intensity={0.8} castShadow />
-          <pointLight position={[-8, 4, 4]} color="#6366f1" intensity={1.2} />
-          <pointLight position={[8, 4, -4]} color="#ec4899" intensity={0.8} />
+          <pointLight position={[-8, 4, 4]} color="#F2C7C7" intensity={1.4} />
+          <pointLight position={[8, 4, -4]} color="#D5F3D8" intensity={1.2} />
           <spotLight
             position={[0, 12, 0]}
             angle={0.5}
             penumbra={0.8}
             intensity={1.5}
-            color="#a5b4fc"
+            color="#FFFFFF"
             castShadow
           />
 

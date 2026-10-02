@@ -44,24 +44,35 @@ function AllPosts() {
             </h1>
           </div>
 
-          {/* Search Box */}
-          <form onSubmit={handleSearch} className="relative w-full sm:w-72">
-            <input
-              type="text"
-              placeholder="Search posts..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-full px-4 py-2 pl-9 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 backdrop-blur-md"
-            />
-            <svg
-              className="w-4 h-4 text-gray-400 absolute left-3 top-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {/* Search Box */}
+            <form onSubmit={handleSearch} className="relative flex-1 sm:w-64">
+              <input
+                type="text"
+                placeholder="Search posts..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-full px-4 py-2 pl-9 text-xs sm:text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F2C7C7] backdrop-blur-md"
+              />
+              <svg
+                className="w-4 h-4 text-gray-400 absolute left-3 top-2.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </form>
+
+            {/* Quick Write Story Button */}
+            <a
+              href="/add-post"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-gray-900 bg-gradient-to-r from-[#F2C7C7] via-white to-[#D5F3D8] hover:opacity-95 shadow-md shadow-[#F2C7C7]/20 transition-all hover:scale-105 whitespace-nowrap"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </form>
+              <span>✍️</span>
+              <span>Write Article</span>
+            </a>
+          </div>
         </div>
 
         {/* ── Content ── */}

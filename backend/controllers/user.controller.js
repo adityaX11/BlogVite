@@ -4,8 +4,8 @@ import { User, Post } from '../../database/index.js';
 export const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .populate('friends', 'name email avatar bio')
-      .populate('friendRequests.from', 'name email avatar bio');
+      .populate('friends', 'name username email avatar bio')
+      .populate('friendRequests.from', 'name username email avatar bio');
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -33,14 +33,23 @@ export const discoverUsers = async (req, res) => {
     const query = { _id: { $ne: req.user._id } };
 
     if (search.trim()) {
-      query.$or = [
-        { name: { $regex: search.trim(), $options: 'i' } },
-        { email: { $regex: search.trim(), $options: 'i' } },
+      const term = search.trim();
+      const orClauses = [
+        { name: { $regex: term, $options: 'i' } },
+        { username: { $regex: term, $options: 'i' } },
+        { email: { $regex: term, $options: 'i' } },
       ];
+
+      // If user typed an exact 24-character hexadecimal ObjectId
+      if (/^[0-9a-fA-F]{24}$/.test(term)) {
+        orClauses.push({ _id: term });
+      }
+
+      query.$or = orClauses;
     }
 
     const users = await User.find(query)
-      .select('name email avatar bio createdAt friends friendRequests')
+      .select('name username email avatar bio createdAt friends friendRequests')
       .limit(30)
       .lean();
 
@@ -68,6 +77,7 @@ export const discoverUsers = async (req, res) => {
       return {
         _id: u._id,
         name: u.name,
+        username: u.username || '',
         email: u.email,
         avatar: u.avatar,
         bio: u.bio,
@@ -176,3 +186,65 @@ export const unfriend = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+/* ─── GET ANOTHER USER'S PUBLIC PROFILE ─────────────────── */
+export const getUserProfile = async (req, res) => {
+  const { identifier } = req.params;
+  try {
+    let targetUser = null;
+
+    if (/^[0-9a-fA-F]{24}$/.test(identifier)) {
+      targetUser = await User.findById(identifier);
+    }
+    if (!targetUser) {
+      targetUser = await User.findOne({ username: identifier.toLowerCase().trim() });
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const posts = await Post.find({ author: targetUser._id, status: 'active' })
+      .sort({ createdAt: -1 })
+      .populate('author', 'name username avatar')
+      .lean();
+
+    const currentUser = await User.findById(req.user._id);
+
+    const isSelf = targetUser._id.toString() === req.user._id.toString();
+    const isFriend = currentUser?.friends?.some(
+      (f) => f.toString() === targetUser._id.toString()
+    );
+    const hasSentRequest = targetUser.friendRequests?.some(
+      (r) => r.from?.toString() === req.user._id.toString() && r.status === 'pending'
+    );
+    const hasReceivedRequest = currentUser?.friendRequests?.some(
+      (r) => r.from?.toString() === targetUser._id.toString() && r.status === 'pending'
+    );
+
+    let connectionStatus = 'none';
+    if (isSelf) connectionStatus = 'self';
+    else if (isFriend) connectionStatus = 'connected';
+    else if (hasSentRequest) connectionStatus = 'requested';
+    else if (hasReceivedRequest) connectionStatus = 'pending_response';
+
+    res.json({
+      user: {
+        _id: targetUser._id,
+        name: targetUser.name,
+        username: targetUser.username || '',
+        avatar: targetUser.avatar || '',
+        bio: targetUser.bio || '',
+        createdAt: targetUser.createdAt,
+        friendCount: targetUser.friends?.length || 0,
+        postCount: posts.length,
+      },
+      connectionStatus,
+      isSelf,
+      posts,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+

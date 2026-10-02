@@ -2,7 +2,11 @@
    Base API service — handles JWT, auto-refresh, and fetch
    ───────────────────────────────────────────────────────── */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+    ? `${window.location.origin}/api`
+    : 'http://localhost:5000/api');
 
 class ApiService {
   #accessToken = localStorage.getItem('accessToken') || null;

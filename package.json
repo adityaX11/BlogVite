@@ -13,6 +13,7 @@
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run dev --workspace=backend",
     "build": "npm run build --workspace=frontend",
+    "start": "node backend/server.js",
     "seed": "npm run seed --workspace=database",
     "seed:clear": "npm run seed:clear --workspace=database",
     "install:all": "npm install && npm install --workspace=frontend && npm install --workspace=backend && npm install --workspace=database"

@@ -45,10 +45,10 @@ export const createPost = async (req, res) => {
 
     const post = await Post.create({
       title,
-      slug,
-      content,
+      slug: finalSlug,
+      content: content || '',
       status: status || 'active',
-      tags: tags ? JSON.parse(tags) : [],
+      tags: parsedTags,
       author: req.user._id,
       featuredImage: req.file
         ? {
@@ -61,7 +61,7 @@ export const createPost = async (req, res) => {
         : undefined,
     });
 
-    await post.populate('author', 'name avatar');
+    await post.populate('author', 'name username avatar');
     res.status(201).json(post);
   } catch (err) {
     // If image was uploaded but DB failed, clean Cloudinary
@@ -82,7 +82,7 @@ export const getPosts = async (req, res) => {
 
     const [posts, total] = await Promise.all([
       Post.find(query)
-        .populate('author', 'name avatar')
+        .populate('author', 'name username avatar')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(Number(limit))
@@ -110,7 +110,7 @@ export const getPost = async (req, res) => {
       { slug: req.params.slug, status: 'active' },
       { $inc: { views: 1 } },
       { new: true }
-    ).populate('author', 'name avatar bio');
+    ).populate('author', 'name username avatar bio');
 
     if (!post) return res.status(404).json({ message: 'Post not found' });
     res.json(post);
@@ -148,9 +148,20 @@ export const updatePost = async (req, res) => {
 
     const { title, content, caption, status, tags } = req.body;
     if (title) post.title = title;
-    if (content) { post.content = content; post.excerpt = ''; } // re-generate excerpt
+    if (content !== undefined) { post.content = content; post.excerpt = ''; }
     if (status) post.status = status;
-    if (tags) post.tags = JSON.parse(tags);
+
+    if (tags) {
+      if (typeof tags === 'string') {
+        try { post.tags = JSON.parse(tags); } catch { post.tags = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean); }
+      } else if (Array.isArray(tags)) {
+        post.tags = tags;
+      }
+    }
+
+    if (caption !== undefined && post.featuredImage && !req.file) {
+      post.featuredImage.caption = caption;
+    }
 
     if (req.file) {
       // Delete old image from Cloudinary
@@ -163,7 +174,7 @@ export const updatePost = async (req, res) => {
     }
 
     await post.save();
-    await post.populate('author', 'name avatar');
+    await post.populate('author', 'name username avatar');
     res.json(post);
   } catch (err) {
     if (req.file) await deleteImage(req.file.filename);

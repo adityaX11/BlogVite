@@ -23,7 +23,7 @@ const cookieOptions = {
    SIGNUP
 ════════════════════════════════════════════════════════════ */
 export const signup = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, username } = req.body;
   if (!name || !email || !password) {
     return res.status(400).json({ message: 'name, email and password are required' });
   }
@@ -31,7 +31,18 @@ export const signup = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(409).json({ message: 'Email already registered' });
 
-    const user = await User.create({ name, email, password, provider: 'local' });
+    if (username) {
+      const usernameExists = await User.findOne({ username: username.toLowerCase().trim() });
+      if (usernameExists) return res.status(409).json({ message: 'Username is already taken' });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      username: username ? username.toLowerCase().trim() : undefined,
+      provider: 'local',
+    });
     const { accessToken, refreshToken } = generateTokens(user._id);
 
     user.refreshToken = refreshToken;
@@ -128,12 +139,33 @@ export const getMe = async (req, res) => {
    UPDATE PROFILE
 ════════════════════════════════════════════════════════════ */
 export const updateProfile = async (req, res) => {
-  const { name, bio } = req.body;
+  const { name, bio, username, avatar, removeAvatar } = req.body;
   try {
     const user = await User.findById(req.user._id);
-    if (name) user.name = name;
-    if (bio !== undefined) user.bio = bio;
-    await user.save();
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (name) user.name = name.trim();
+    if (bio !== undefined) user.bio = bio.trim();
+
+    // Handle avatar image from Cloudinary or removal
+    if (req.file?.path) {
+      user.avatar = req.file.path;
+    } else if (removeAvatar === 'true' || removeAvatar === true) {
+      user.avatar = '';
+    } else if (avatar !== undefined) {
+      user.avatar = avatar;
+    }
+
+    if (username && username.toLowerCase().trim() !== user.username) {
+      const cleanUsername = username.toLowerCase().trim();
+      const existing = await User.findOne({ username: cleanUsername });
+      if (existing && existing._id.toString() !== user._id.toString()) {
+        return res.status(409).json({ message: 'Username is already taken' });
+      }
+      user.username = cleanUsername;
+    }
+
+    await user.save({ validateBeforeSave: false });
     res.json({ user: user.toPublic() });
   } catch (err) {
     res.status(500).json({ message: err.message });

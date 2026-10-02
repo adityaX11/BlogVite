@@ -1,45 +1,28 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import Logo from '../Logo';
 
 function Footer() {
   return (
-    <footer className="relative z-20 mt-auto bg-black/40 backdrop-blur-2xl border-t border-white/10 text-gray-400 py-10 transition-colors">
+    <footer className="relative z-20 mt-auto bg-black/40 backdrop-blur-2xl border-t border-white/10 text-gray-400 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* ── Brand & Description ── */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-2">
-            <Link to="/" className="inline-block group">
-              <Logo />
-            </Link>
-            <p className="text-xs text-gray-400 max-w-sm">
-              Next-generation blogging platform powered by React, MongoDB, Three.js & real-time social connections.
-            </p>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          {/* ── Brand Logo ── */}
+          <div className="flex items-center gap-3">
+            <Logo width="120px" showText={true} />
+            <span className="hidden sm:inline text-xs text-gray-500">•</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#D5F3D8]">
+              v1.2.0
+            </span>
           </div>
 
-          {/* ── Navigation Links ── */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-gray-300">
-            <Link to="/" className="hover:text-indigo-400 transition-colors">
-              Home
-            </Link>
-            <Link to="/all-posts" className="hover:text-indigo-400 transition-colors">
-              Explore Stories
-            </Link>
-            <Link to="/add-post" className="hover:text-indigo-400 transition-colors">
-              Write an Article
-            </Link>
-            <Link to="/dashboard" className="hover:text-indigo-400 transition-colors">
-              User Dashboard
-            </Link>
+          {/* ── Thought / Inspiration ── */}
+          <div className="text-xs italic text-[#F2C7C7]/90 font-light max-w-md">
+            "Where ideas bloom softly, and creative voices connect quietly."
           </div>
 
-          {/* ── Social / Copyright ── */}
-          <div className="flex flex-col items-center md:items-end text-xs text-gray-500 space-y-1">
-            <div className="flex items-center gap-3 text-gray-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>MongoDB & Cloudinary Online</span>
-            </div>
-            <p>&copy; {new Date().getFullYear()} BlogVite. Built with passion & precision.</p>
+          {/* ── Copyright ── */}
+          <div className="text-xs text-gray-500">
+            &copy; {new Date().getFullYear()} BlogVite. All rights reserved.
           </div>
         </div>
       </div>

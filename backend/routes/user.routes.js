@@ -6,11 +6,13 @@ import {
   sendFriendRequest,
   respondFriendRequest,
   unfriend,
+  getUserProfile,
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
 
 router.get('/profile', protect, getMyProfile);
+router.get('/profile/:identifier', protect, getUserProfile);
 router.get('/discover', protect, discoverUsers);
 router.post('/connect/:targetUserId', protect, sendFriendRequest);
 router.put('/request/:requestId', protect, respondFriendRequest);

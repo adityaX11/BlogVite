@@ -1,6 +1,6 @@
 import { authService as newAuth } from '../services/auth.service';
-import { Link, useNavigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { login as authLogin } from '../store/authSlice';
@@ -8,9 +8,21 @@ import { login as authLogin } from '../store/authSlice';
 function Login() {
   const navigate  = useNavigate();
   const dispatch  = useDispatch();
+  const [searchParams] = useSearchParams();
   const { register, handleSubmit } = useForm();
   const [error, setError]  = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const errParam = searchParams.get('error');
+    if (errParam === 'facebook_not_configured') {
+      setError('Facebook sign in is not configured yet. Please configure FACEBOOK_APP_ID & FACEBOOK_APP_SECRET in backend/.env');
+    } else if (errParam === 'google_not_configured') {
+      setError('Google sign in is not configured yet. Please configure GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET in backend/.env');
+    } else if (errParam === 'oauth') {
+      setError('Social authentication was cancelled or failed. Please try again.');
+    }
+  }, [searchParams]);
 
   /* ── Native JWT Login ──────────────────────────────────── */
   const login = async (data) => {
@@ -42,19 +54,21 @@ function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center w-full min-h-[80vh] px-4">
+    <div className="flex items-center justify-center w-full min-h-[85vh] px-4 py-10">
       <div className="mx-auto w-full max-w-md">
 
         {/* ── Card ── */}
-        <div className="bg-white/8 backdrop-blur-2xl border border-white/15 rounded-3xl p-8 shadow-2xl shadow-indigo-900/40">
+        <div className="bg-white/8 backdrop-blur-2xl border border-white/15 rounded-3xl p-8 shadow-2xl shadow-[#F2C7C7]/10">
 
           {/* Logo / Title */}
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-3">✍️</div>
-            <h2 className="text-2xl font-bold text-white">Welcome back</h2>
-            <p className="text-gray-400 text-sm mt-1">
+          <div className="text-center mb-6">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-[#F2C7C7] via-white to-[#D5F3D8] flex items-center justify-center text-2xl shadow-md">
+              ✍️
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
+            <p className="text-gray-400 text-xs mt-1">
               Don&apos;t have an account?{' '}
-              <Link to="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+              <Link to="/signup" className="text-[#F2C7C7] hover:underline font-semibold transition-colors">
                 Sign up
               </Link>
             </p>
@@ -112,7 +126,7 @@ function Login() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F2C7C7] focus:border-transparent transition-all"
                 {...register('email', { required: true })}
               />
             </div>
@@ -122,7 +136,7 @@ function Login() {
               <input
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F2C7C7] focus:border-transparent transition-all"
                 {...register('password', { required: true })}
               />
             </div>
@@ -130,11 +144,11 @@ function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-lg shadow-indigo-900/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-[#F2C7C7] via-white to-[#D5F3D8] hover:opacity-95 text-gray-900 font-bold py-3.5 px-4 rounded-xl transition-all shadow-md shadow-[#F2C7C7]/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-4 h-4 text-gray-900" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>

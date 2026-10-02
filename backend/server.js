@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import fs from 'fs';
 import dotenv from 'dotenv';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -18,14 +19,37 @@ import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js';
 import userRoutes from './routes/user.routes.js';
 import chatRoutes from './routes/chat.routes.js';
+import newsRoutes from './routes/news.routes.js';
 
 const app = express();
 
 /* ─── Security ──────────────────────────────────────────── */
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:5000',
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        process.env.NODE_ENV === 'production' ||
+        allowedOrigins.some((allowed) => origin.startsWith(allowed))
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
@@ -51,8 +75,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/news', newsRoutes);
 
 app.get('/api/health', (_, res) => res.json({ status: 'OK', timestamp: new Date() }));
+
+/* ─── Production Frontend Static Assets ──────────────────── */
+const frontendDist = join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(join(frontendDist, 'index.html'));
+  });
+}
 
 /* ─── Global error handler ───────────────────────────────── */
 // eslint-disable-next-line no-unused-vars

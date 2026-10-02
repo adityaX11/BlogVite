@@ -17,25 +17,30 @@ import Post from './pages/Post.jsx';
 import OAuthCallback from './pages/OAuthCallback.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Chat from './pages/Chat.jsx';
+import News from './pages/News.jsx';
+import UserProfile from './pages/UserProfile.jsx';
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     children: [
+      // ── Public Routes (accessible without login) ──
       { path: '/',                element: <Home /> },
-      { path: '/all-posts',       element: <AllPosts /> },
-      { path: '/post/:slug',      element: <Post /> },
-
       { path: '/login',           element: <Protected authentication={false}><Login /></Protected> },
       { path: '/signup',          element: <Protected authentication={false}><Signup /></Protected> },
       { path: '/oauth-callback',  element: <OAuthCallback /> },
 
+      // ── Protected Routes (ONLY logged-in users can access) ──
+      { path: '/all-posts',       element: <Protected authentication><AllPosts /></Protected> },
+      { path: '/post/:slug',      element: <Protected authentication><Post /></Protected> },
       { path: '/add-post',        element: <Protected authentication><AddPost /></Protected> },
       { path: '/edit-post/:slug', element: <Protected authentication><EditPost /></Protected> },
       { path: '/dashboard',       element: <Protected authentication><Dashboard /></Protected> },
+      { path: '/profile/:identifier', element: <Protected authentication><UserProfile /></Protected> },
       { path: '/chat',            element: <Protected authentication><Chat /></Protected> },
       { path: '/chat/:friendId',  element: <Protected authentication><Chat /></Protected> },
+      { path: '/news',            element: <Protected authentication><News /></Protected> },
     ],
   },
 ]);
