@@ -121,14 +121,19 @@ function Chat() {
     }
   }, [friendId, conversations]);
 
-  // Real-time live polling every 2.5 seconds
+  // Real-time live polling: active messages every 3s, conversations every 15s
   useEffect(() => {
     if (!friendId) return;
-    const interval = setInterval(() => {
+    const msgInterval = setInterval(() => {
       loadMessages(friendId);
+    }, 3000);
+    const convInterval = setInterval(() => {
       loadConversations();
-    }, 2500);
-    return () => clearInterval(interval);
+    }, 15000);
+    return () => {
+      clearInterval(msgInterval);
+      clearInterval(convInterval);
+    };
   }, [friendId]);
 
   // Only auto-scroll down if user was already at the bottom

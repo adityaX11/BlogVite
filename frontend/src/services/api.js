@@ -59,6 +59,12 @@ class ApiService {
       return { error: 'Session expired. Please log in again.', status: 401 };
     }
 
+    // Handle 429 rate limit gracefully without throwing
+    if (res.status === 429) {
+      console.warn('API rate limit reached, slowing down requests...');
+      return { message: 'Too many requests, please wait a moment.', status: 429 };
+    }
+
     // Handle empty responses
     const text = await res.text();
     try {

@@ -23,6 +23,9 @@ import newsRoutes from './routes/news.routes.js';
 
 const app = express();
 
+// Trust reverse proxy (Render, Cloudflare, etc.) to correctly isolate individual client IPs
+app.set('trust proxy', 1);
+
 /* ─── Security ──────────────────────────────────────────── */
 app.use(
   helmet({
@@ -55,14 +58,28 @@ app.use(
   })
 );
 
-/* ─── Rate limiting ─────────────────────────────────────── */
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100,
+/* ─── Scalable Rate Limiting ────────────────────────────── */
+// General API limiter: 3,000 requests per 15 min per IP (~200 req/min for smooth chat & browsing)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3000,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { message: 'Too many requests from this IP, please try again in a few moments.' },
 });
-app.use('/api/', limiter);
+
+// Strict brute-force protection for auth endpoints (50 attempts per 15 min)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many authentication attempts. Please try again in 15 minutes.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use('/api/', apiLimiter);
 
 /* ─── Parsers ────────────────────────────────────────────── */
 app.use(express.json({ limit: '10mb' }));
