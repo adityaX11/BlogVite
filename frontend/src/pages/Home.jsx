@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import appwriteService from '../appwrite/config';   // ← Appwrite (kept during transition)
+import { postService } from '../services/post.service'; // ← MongoDB Backend
 import Container from '../components/container/container';
 import PostCard from '../components/PostCard';
 import ThreePostCards from '../components/ThreePostCards';
@@ -12,9 +13,23 @@ function Home() {
   const isLoggedIn = useSelector((state) => state.auth.status);
 
   useEffect(() => {
-    appwriteService.getPosts([]).then((result) => {
-      if (result) setPosts(result.documents);
-    }).finally(() => setLoading(false));
+    // Try MongoDB backend first
+    postService.getPosts()
+      .then((res) => {
+        if (res?.posts && res.posts.length > 0) {
+          setPosts(res.posts);
+        } else {
+          return appwriteService.getPosts([]).then((result) => {
+            if (result) setPosts(result.documents);
+          });
+        }
+      })
+      .catch(() => {
+        appwriteService.getPosts([]).then((result) => {
+          if (result) setPosts(result.documents);
+        });
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   /* ── Glassmorphism header strip above the 3D scene ─── */

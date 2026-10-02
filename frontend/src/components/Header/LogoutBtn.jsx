@@ -1,52 +1,31 @@
-import React from 'react'
-import {useDispatch} from "react-redux"
-import authService from "../../appwrite/auth.js"
-import {logout } from "../../store/authSlice.js"
+import React from 'react';
+import { useDispatch } from 'react-redux';
+import authService from '../../appwrite/auth.js';
+import { authService as newAuth } from '../../services/auth.service.js';
+import { logout } from '../../store/authSlice.js';
 
 function LogoutBtn() {
-    const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
-    const lougoutHandler = () => {
-        authService.logout().then(() => {
-            dispatch(logout());
-        })
+  const logoutHandler = async () => {
+    try {
+      await Promise.allSettled([
+        newAuth.logout(),
+        authService.logout(),
+      ]);
+    } finally {
+      dispatch(logout());
     }
+  };
+
   return (
     <button
-    className='inline-bock px-6 py-2 duration-200 hover:bg-blue-100 rounded-full'
-    onClick={lougoutHandler}
-    >Logout</button>
-  )
+      className="px-4 py-1.5 text-xs font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-full transition-all duration-200"
+      onClick={logoutHandler}
+    >
+      Sign Out
+    </button>
+  );
 }
 
-export default LogoutBtn
-
-
-// import React from 'react'
-// import { useDispatch } from 'react-redux'
-// import authService from '../../appwrite/config'
-// import { logout } from '../../store/authSlice'
-
-// function LogoutBtn() {
-//     const dispatch=useDispatch();
-//     const logoutHandler=()=>{
-//         authService.logout()
-//          .then(()=>{
-//             dispatch(logout());
-//          })
-//          .catch((err)=>{
-//             console.log("Logout button error :: backend ::",err);
-//          })
-//     }
-//   return (
-//     <button
-//     className='inline-block px-6 py-2 duration-200 hover:bg-blue-200 rounded-full'
-//     >Logout</button>
-//   )
-// }
-
-// export default LogoutBtn
-
-
-// // this logout file is why seperated because it will be set as a conditionaly.
-// // means when user is loged in the it will be rendering. otherwise not show there.
+export default LogoutBtn;

@@ -3,14 +3,19 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import dotenv from 'dotenv';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '.env') });
+dotenv.config();
+
 import passport from 'passport';
-import connectDB from '../../database/index.js';
+import connectDB from '../database/index.js';
 import './config/passport.js';        // register strategies
 import authRoutes from './routes/auth.routes.js';
 import postRoutes from './routes/post.routes.js';
-
-dotenv.config();
 
 const app = express();
 

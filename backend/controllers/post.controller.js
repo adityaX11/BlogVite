@@ -1,4 +1,4 @@
-import { Post } from '../../../database/index.js';
+import { Post } from '../../database/index.js';
 import { deleteImage } from '../utils/cloudinary.js';
 
 /* ════════════════════════════════════════════════════════════

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../../../database/index.js';
+import { User } from '../../database/index.js';
 
 /* ─── Protect middleware — verifies Bearer access token ───── */
 export const protect = async (req, res, next) => {

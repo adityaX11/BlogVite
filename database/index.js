@@ -1,8 +1,10 @@
 /**
  * database/index.js
- * Single entry point — backend imports models from here.
- * This keeps all DB-related code isolated from the API layer.
+ * Single entry point — backend imports models and DB connection from here.
  */
+import connectDB from './config/db.js';
+
 export { default as User } from './models/User.js';
 export { default as Post } from './models/Post.js';
-export { default as connectDB } from './config/db.js';
+export { connectDB };
+export default connectDB;

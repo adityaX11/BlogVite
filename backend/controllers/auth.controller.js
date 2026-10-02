@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../../../database/index.js';
+import { User } from '../../database/index.js';
 
 /* ─── Token factory ──────────────────────────────────────── */
 const generateTokens = (userId) => ({

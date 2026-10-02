@@ -1,98 +1,72 @@
-import React, {useState} from 'react'
-import {Link} from "react-router-dom"
-import {useSelector} from "react-redux"
-import appwriteService from "../appwrite/config.js"
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import appwriteService from '../appwrite/config.js';
 
 function PostCard({
-    $id, title, featuredImage, featureImg, userId
+  $id,
+  _id,
+  slug,
+  title,
+  featuredImage,
+  featureImg,
+  userId,
+  author,
+  excerpt,
 }) {
-  const imageId = featuredImage || featureImg
-  const userData = useSelector((state) => state.auth.userData)
-  const [imageVersion, setImageVersion] = useState(0)
-  const [imageFailed, setImageFailed] = useState(false)
-  const [repairAttempted, setRepairAttempted] = useState(false)
+  const postId = slug || $id || _id;
+  const userData = useSelector((state) => state.auth.userData);
+  const [imageFailed, setImageFailed] = useState(false);
 
-  const previewUrl = imageId ? appwriteService.getFilePreview(imageId) : ""
-  const imageUrl = previewUrl
-    ? `${previewUrl}${previewUrl.includes("?") ? "&" : "?"}v=${imageVersion}`
-    : ""
-
-  const repairImagePermissions = async () => {
-    if (repairAttempted) {
-      setImageFailed(true)
-      return
+  // Determine image source (MongoDB URL or Appwrite preview URL)
+  let imageUrl = '';
+  if (typeof featuredImage === 'object' && featuredImage?.url) {
+    imageUrl = featuredImage.url;
+  } else if (typeof featuredImage === 'string' && (featuredImage.startsWith('http') || featuredImage.startsWith('/'))) {
+    imageUrl = featuredImage;
+  } else {
+    const fileId = featuredImage || featureImg;
+    if (fileId) {
+      imageUrl = appwriteService.getFilePreview(fileId);
     }
-
-    setRepairAttempted(true)
-
-    if (imageId && userData?.$id && userId === userData.$id) {
-      const updatedFile = await appwriteService.makeFileReadable(imageId, userData.$id)
-
-      if (updatedFile) {
-        setImageFailed(false)
-        setImageVersion((version) => version + 1)
-        return
-      }
-    }
-
-    setImageFailed(true)
   }
 
+  const authorName = author?.name || (typeof author === 'string' ? author : '');
+
   return (
-    <Link to={`/post/${$id}`}>
-        <div
-        className='w-full bg-gray-100 rounded-xl p-4'
-        >
-            <div
-            className='w-full justify-center mb-4'
-            >
-                {imageUrl && !imageFailed ? (
-                    <img
-                    src={imageUrl}
-                    alt={title}
-                    className='rounded-xl'
-                    onError={repairImagePermissions}
-                    />
-                ) : (
-                    <div className='flex min-h-32 items-center justify-center rounded-xl bg-gray-200 px-4 text-center text-sm text-gray-600'>
-                        Image unavailable
-                    </div>
-                )}
+    <Link to={`/post/${postId}`}>
+      <div className="group h-full flex flex-col bg-white/10 hover:bg-white/15 backdrop-blur-xl rounded-2xl p-4 border border-white/10 hover:border-indigo-400/40 transition-all duration-300 shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1">
+        <div className="w-full h-44 overflow-hidden rounded-xl mb-4 bg-indigo-950/40 relative">
+          {imageUrl && !imageFailed ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="flex w-full h-full items-center justify-center text-4xl bg-gradient-to-br from-indigo-900/40 to-purple-900/40 text-indigo-300">
+              ✍️
             </div>
-            <h2 className='text-xl font-bold'>{title}</h2>
+          )}
         </div>
+        <h2 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-indigo-300 transition-colors">
+          {title}
+        </h2>
+        {excerpt && (
+          <p className="text-gray-400 text-xs line-clamp-2 mb-3">
+            {excerpt}
+          </p>
+        )}
+        <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-xs text-gray-400">
+          <span>{authorName || 'BlogVite Author'}</span>
+          <span className="text-indigo-400 font-semibold group-hover:translate-x-1 transition-transform">
+            Read →
+          </span>
+        </div>
+      </div>
     </Link>
-  )
+  );
 }
 
-export default PostCard
-
-
-// import React from 'react'
-// import { Link } from 'react-router-dom' // <Link> tag work-> To navigate between pages in React WITHOUT refreshing the browser.
-// import appwriteService from '../appwrite/config'
-
-
-// function PostCard({$id, title, featuredImage}) {
-//   return (
-//     <link to={`/post/${$id}`}>
-//         <div className='w-full bg-gray-100 rounded-xl p-4'>
-//             <div className='w-full justify-center mb-4'>
-//                 <img src={appwriteService.getFilePreview(featuredImage)} alt={title} className='rounded-xl' />
-//             </div>
-//             <h2 className='text-xl'>{title}</h2>
-//         </div>
-//     </link>
-//   )
-// }
-
-// export default PostCard
-
-
-// //<Link> = “Yo React, change the page but don’t reload my whole app.”
-// //<Link> is used for SPA(single Page Application.) navigation — changing pages without breaking your app or reloading it.
-
-// //<a> = “Reload everything and start over like it’s 2005.”
-// // Due to <Link> tag react is the single page Application.
-
-// //SPA = “You load the app once and vibe. No reloads, just smooth screen changes.”
+export default PostCard;
